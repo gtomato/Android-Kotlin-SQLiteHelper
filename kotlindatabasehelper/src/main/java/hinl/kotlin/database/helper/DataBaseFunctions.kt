@@ -14,11 +14,11 @@ annotation class Database(val tableName: String = "")
 
 @Target (AnnotationTarget.FIELD)
 @Retention (AnnotationRetention.RUNTIME)
-annotation class Schema(val isGeneratedId: Boolean = false,
-                        val isNonNullable: Boolean = false,
-                        val isAutoIncrease: Boolean = false,
-                        val unique: Boolean = false,
-                        val field: String)
+annotation class Schema(val field: String,
+                        val generatedId: Boolean = false,
+                        val nonNullable: Boolean = false,
+                        val autoIncrease: Boolean = false,
+                        val unique: Boolean = false)
 
 internal fun KClass<*>.getTableName(): String {
     val dataBase = this.findAnnotation<Database>()
@@ -39,7 +39,7 @@ internal fun KClass<*>.getDataBaseField(): HashMap<String, KProperty1<*, *>> {
 internal fun KProperty1<*, *>.isDataBaseFieldGeneratedId(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
-        return schema.isGeneratedId
+        return schema.generatedId
     } else {
         return false
     }
@@ -48,7 +48,7 @@ internal fun KProperty1<*, *>.isDataBaseFieldGeneratedId(): Boolean? {
 internal fun KProperty1<*, *>.isDataBaseFieldNonNullable(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
-        return schema.isNonNullable
+        return schema.nonNullable
     } else {
         return false
     }
@@ -57,7 +57,7 @@ internal fun KProperty1<*, *>.isDataBaseFieldNonNullable(): Boolean? {
 internal fun KProperty1<*, *>.isDataBaseFieldAutoIncrease(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
-        return schema.isAutoIncrease
+        return schema.autoIncrease
     } else {
         return false
     }
@@ -79,19 +79,19 @@ internal fun Any.getDataBaseFieldValue(key: String): Any? {
 }
 
 internal fun KClass<*>.getDataBaseFieldType(): String {
-    when (this) {
-        String::class -> return "TEXT"
-        Date::class -> return "BIGINT"
-        Boolean::class -> return "BOOLEAN"
-        Char::class -> return "CHAR"
-        Byte::class -> return "TINYINT"
-        Short::class -> return "SMALLINT"
-        Int::class -> return "INTEGER"
-        Long::class -> return "BIGINT"
-        Float::class -> return "FLOAT"
-        Double::class -> return "DOUBLE PRECISION"
-        ByteArray::class -> return "BLOB"
-        BigDecimal::class -> return "NUMERIC"
-        else -> return ""
+    return when (this) {
+        String::class -> "TEXT"
+        Date::class -> "BIGINT"
+        Boolean::class -> "BOOLEAN"
+        Char::class -> "CHAR"
+        Byte::class -> "TINYINT"
+        Short::class -> "SMALLINT"
+        Int::class -> "INTEGER"
+        Long::class -> "BIGINT"
+        Float::class -> "FLOAT"
+        Double::class -> "DOUBLE PRECISION"
+        ByteArray::class -> "BLOB"
+        BigDecimal::class -> "NUMERIC"
+        else -> ""
     }
 }

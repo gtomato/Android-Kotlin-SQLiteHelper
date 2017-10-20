@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import java.math.BigDecimal
 import java.util.*
 import kotlin.reflect.KClass
@@ -93,7 +92,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
 
         val contentValues = ContentValues()
         for (key in fieldMap.keys) {
-            if ((fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema)?.isGeneratedId?: false) {
+            if ((fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema)?.generatedId ?: false) {
                 continue
             }
             val value = obj.getDataBaseFieldValue(key = key)
@@ -126,7 +125,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         val contentValues = ContentValues()
         for (key in fieldMap.keys) {
             val schema: Schema? = fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema
-            if (schema?.isGeneratedId?: false) {
+            if (schema?.generatedId ?: false) {
                 val field = schema?.field
                 if (where == null && field != null && obj.getDataBaseFieldValue(key = key) != null) {
                     whereClause = schema.field + Where.IStatement.Equal
@@ -162,7 +161,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
 
         for (key in fieldMap.keys) {
             val schema: Schema? = fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema
-            if (schema?.isGeneratedId?: false) {
+            if (schema?.generatedId ?: false) {
                 val field = schema?.field
                 if (where == null && field != null && obj.getDataBaseFieldValue(key = key) != null) {
                     whereClause = schema.field + Where.IStatement.Equal

@@ -22,9 +22,9 @@ interface ISelectionOperator<WHERE:ISelectionOperator<WHERE, OPERATOR>,
         Descending;
 
         fun getClauseString(): String {
-            when (this) {
-                Ascending -> return "ASC"
-                Descending -> return "DESC"
+            return when (this) {
+                Ascending -> "ASC"
+                Descending -> "DESC"
             }
         }
     }
@@ -308,10 +308,10 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         }
 
         override fun getStatementString(): String {
-            when (this) {
-                And -> return "AND"
-                Or -> return "OR"
-                else -> return ""
+            return when (this) {
+                And -> "AND"
+                Or -> "OR"
+                else -> ""
             }
         }
     }
