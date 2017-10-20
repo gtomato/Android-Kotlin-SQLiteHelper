@@ -117,7 +117,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         writableDatabase.insert(tableName, null, contentValues)
     }
 
-    fun update(obj: Any, where: (Where.() -> Unit)? = null) {
+    fun update(obj: Any, where: (Where.() -> Where)? = null) {
         val (tableName, fieldMap) = validateValidClass(obj::class)
 
         var (whereClause, args) = getWhereStatement(where)
@@ -155,7 +155,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         writableDatabase.update(tableName, contentValues, whereClause, args)
     }
 
-    fun delete(obj: Any, where: (Where.() -> Unit)? = null) {
+    fun delete(obj: Any, where: (Where.() -> Where)? = null) {
         val (tableName, fieldMap) = validateValidClass(obj::class)
         var (whereClause, args) = getWhereStatement(where)
 
@@ -173,7 +173,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         writableDatabase.delete(tableName, whereClause, args)
     }
 
-    fun <Clazz: Any>get(obj: KClass<Clazz>, where: (Where.() -> Unit)? = null): ArrayList<Clazz>? {
+    fun <Clazz: Any>get(obj: KClass<Clazz>, where: (Where.() -> Where)? = null): ArrayList<Clazz>? {
         val listOfObj = ArrayList<Clazz>()
 
         val (tableName, fieldMap) = validateValidClass(obj)
@@ -246,7 +246,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         return DataBaseSchema(tableName, fieldMap)
     }
 
-    private fun getWhereStatement(where: (Where.() -> Unit)? = null): Statements {
+    private fun getWhereStatement(where: (Where.() -> Where)? = null): Statements {
         var whereClause: String? = null
         var args: Array<String>? = null
         var order: String? = null
