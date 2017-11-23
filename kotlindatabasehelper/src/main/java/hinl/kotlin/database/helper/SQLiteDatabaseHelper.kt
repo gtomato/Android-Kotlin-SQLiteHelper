@@ -149,15 +149,22 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.update(tableName, contentValues, whereClause, args)
     }
 
-    fun delete(obj: Any, where: (Where.() -> Where)? = null) {
-        val (tableName, fieldMap) = validateValidClass(obj::class)
+    fun <T: Any> delete(obj: KClass<T>, where: (Where.() -> Where)? = null) {
+        val (tableName) = validateValidClass(obj::class)
         var (whereClause, args) = getWhereStatement(where)
+        writableDatabase.delete(tableName, whereClause, args)
+    }
+
+    fun delete(obj: Any) {
+        val (tableName, fieldMap) = validateValidClass(obj::class)
+        var whereClause: String? = null
+        var args: Array<String>? = null
 
         for (key in fieldMap.keys) {
             val schema: Schema? = fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema
             if (schema?.generatedId ?: false) {
                 val field = schema?.field
-                if (where == null && field != null && obj.getDataBaseFieldValue(key = key) != null) {
+                if (field != null && obj.getDataBaseFieldValue(key = key) != null) {
                     whereClause = schema.field + Where.IStatement.Equal
                     args = arrayOf(obj.getDataBaseFieldValue(key = key).toString())
                 }
