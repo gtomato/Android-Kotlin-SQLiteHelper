@@ -2,8 +2,10 @@ package hinl.kotlin.database.helper
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import java.math.BigDecimal
 import java.util.*
 import kotlin.reflect.KClass
@@ -16,18 +18,10 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
 
 
-class SQLiteDatabaseHelper: SQLiteOpenHelper {
-    override fun onCreate(db: SQLiteDatabase?) {
-
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-    }
-
-    constructor(context: Context?, name: String?, factory: SQLiteDatabase.CursorFactory?, version: Int) : super(context, name, factory, version)
-//    constructor(context: Context?, name: String?, factory: ((db: SQLiteDatabase, masterQuery: SQLiteCursorDriver, editTable: String, query: SQLiteQuery) -> Cursor)?, version: Int) : super(context, name, factory, version)
-//    constructor(context: Context?, name: String?, factory: SQLiteDatabase.CursorFactory?, version: Int, errorHandler: DatabaseErrorHandler?) : super(context, name, factory, version, errorHandler)
-//    constructor(context: Context?, name: String?, factory: ((db: SQLiteDatabase, masterQuery: SQLiteCursorDriver, editTable: String, query: SQLiteQuery) -> Cursor)?, version: Int, errorHandler: ((dbObj: SQLiteDatabase) -> Unit)?) : super(context, name, factory, version, errorHandler)
+abstract class SQLiteDatabaseHelper(context: Context?,
+                                    name: String?,
+                                    factory: SQLiteDatabase.CursorFactory?,
+                                    version: Int) : SQLiteOpenHelper(context, name, factory, version) {
 
     companion object {
         val SPACE = " "
@@ -39,22 +33,22 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         val PRIMARY_KEY = "primary key"
         val AUTO_INCREMENT = "autoincrement"
         val UNIQUE = "unique"
+
+        val WHERE = "WHERE"
+        val ORDER_BY = "ORDER BY"
+        val COUNT_SQL_QUERY = "SELECT 1 FROM "
     }
 
     fun createTable(tableClass: KClass<*>) {
-        val (tableName) = validateValidClass(tableClass)
+        val (tableName, fieldMap) = validateValidClass(tableClass)
 
         val sb = StringBuilder()
         sb.append(CREATE_TABLE)
         sb.append(SPACE)
         sb.append(IF_NOT_EXIST)
         sb.append(SPACE)
-        sb.append(tableClass.getTableName())
+        sb.append(tableName)
         sb.append("(")
-        val fieldMap = tableClass.getDataBaseField()
-        if (fieldMap.isEmpty()) {
-            return
-        }
         fieldMap.keys.forEachIndexed { index, key ->
             val obj = fieldMap[key]
             if (obj != null && obj.returnType.jvmErasure.getDataBaseFieldType().isNotEmpty()) {
@@ -173,9 +167,7 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         writableDatabase.delete(tableName, whereClause, args)
     }
 
-    fun <Clazz: Any>get(obj: KClass<Clazz>, where: (Where.() -> Where)? = null): ArrayList<Clazz>? {
-        val listOfObj = ArrayList<Clazz>()
-
+    fun <T: Any> get(obj: KClass<T>, where: (Where.() -> Where)? = null): List<T>? {
         val (tableName, fieldMap) = validateValidClass(obj)
         val rDB = readableDatabase
         val outputArr = Array(fieldMap.keys.size, {
@@ -185,11 +177,58 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
         val (whereClause, args, order) = getWhereStatement(where)
 
         val c = rDB.query(tableName, outputArr, whereClause, args, null, null, order)
+        val ret = getCursorObjects(obj, c)
+        c.close()
+        return ret
+    }
+
+    fun count(tableClass: KClass<*>, where: (Where.() -> Where)? = null): Int {
+        val (tableName) = validateValidClass(tableClass)
+        val rDB = readableDatabase
+        val (whereClause, args) = getWhereStatement(where)
+        val sqlQuery = StringBuilder(COUNT_SQL_QUERY)
+        sqlQuery.append(tableName)
+        if (!whereClause.isNullOrEmpty()) {
+            sqlQuery.append(SPACE)
+            sqlQuery.append(WHERE)
+            sqlQuery.append(SPACE)
+            sqlQuery.append(whereClause)
+        }
+        val c = rDB.rawQuery(sqlQuery.toString(), args)
+        val count = c.count
+        c.close()
+        return count
+    }
+
+    fun <T: Any> execRawSQL(objClass: KClass<T>? = null, sqlString: String): List<T>? {
+        if (objClass == null) {
+            writableDatabase.rawQuery(sqlString, null)
+            return null
+        } else {
+            val (tableName, fieldMap) = validateValidClass(objClass)
+            val c = readableDatabase.rawQuery(sqlString, null)
+            val ret = getCursorObjects(objClass, c)
+            c.close()
+            return ret
+        }
+    }
+
+    fun closeDatabase() {
+        if (writableDatabase.isOpen) {
+            writableDatabase.close()
+        }
+        if (readableDatabase.isOpen) {
+            readableDatabase.close()
+        }
+    }
+
+    private fun <T: Any> getCursorObjects(objClass: KClass<T>, c: Cursor): List<T> {
+        val ret = mutableListOf<T>()
         while (c.moveToNext()) {
-            val constructor = obj.primaryConstructor
-            val paramsMap = HashMap<KParameter, Any?>()
+            val constructor = objClass.primaryConstructor
+            val paramsMap = hashMapOf<KParameter, Any?>()
             if (constructor != null) {
-                val properties = obj.memberProperties
+                val properties = objClass.memberProperties
                 for (property in properties) {
                     val fieldName = (property.javaField?.annotations?.find { it is Schema } as? Schema)?.field
                     if (fieldName?.isNotEmpty()?: false) {
@@ -214,21 +253,10 @@ class SQLiteDatabaseHelper: SQLiteOpenHelper {
                         }
                     }
                 }
-                listOfObj.add(constructor.callBy(paramsMap))
+                ret.add(constructor.callBy(paramsMap))
             }
         }
-        c.close()
-
-        return listOfObj
-    }
-
-    fun closeDatabase() {
-        if (writableDatabase.isOpen) {
-            writableDatabase.close()
-        }
-        if (readableDatabase.isOpen) {
-            readableDatabase.close()
-        }
+        return ret
     }
 
     private fun validateValidClass(obj: KClass<*>): DataBaseSchema{
