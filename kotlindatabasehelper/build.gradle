@@ -6,7 +6,7 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'maven'
 
-group = 'hinl'
+group = 'com.hinl'
 version = '1.0.0'
 
 uploadArchives {
