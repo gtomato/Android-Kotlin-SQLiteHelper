@@ -6,7 +6,7 @@ Android-Kotlin SQLiteHelper is a Kotlin library for simplifly android sqlite dat
 
 
 ### Installation
-To use Kotlin-JsonParser in gradle implemented project, 
+To use Android-Kotlin SQLiteHelper in gradle implemented project, 
 ```
 dependencies {
 	...
