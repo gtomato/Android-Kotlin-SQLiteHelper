@@ -82,6 +82,22 @@ abstract class SQLiteDatabaseHelper(context: Context?,
     }
 
     fun insert(obj: Any) {
+        when (obj) {
+            is Collection<*> -> {
+                for (single in obj) {
+                    insertObj(single)
+                }
+            }
+            else -> {
+                insertObj(obj)
+            }
+        }
+    }
+
+    internal fun insertObj(obj: Any?) {
+        if (obj == null) {
+            return
+        }
         val (tableName, fieldMap) = validateValidClass(obj::class)
 
         val contentValues = ContentValues()

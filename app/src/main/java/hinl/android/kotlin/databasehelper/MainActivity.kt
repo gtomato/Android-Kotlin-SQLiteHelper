@@ -9,6 +9,7 @@ import hinl.android.kotlin.databasehelper.example.database.DatabaseHelper
 import hinl.android.kotlin.databasehelper.example.schema.Example
 import hinl.kotlin.database.helper.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,6 +19,7 @@ class MainActivity : AppCompatActivity() {
         val dataBase = DatabaseHelper(this@MainActivity)
         createTable(dataBase)
         insertContent(dataBase)
+        insertListContent(dataBase)
         val listOfExample = readContent(dataBase)
         val updateExample = listOfExample?.get(0)
         updateExample?.columnOne = "Updated Column One"
@@ -46,6 +48,17 @@ class MainActivity : AppCompatActivity() {
         database.insert(exampleObject3)
         database.insert(exampleObject4)
         database.insert(exampleObject5)
+    }
+
+    fun insertListContent(database: DatabaseHelper) {
+        val listOfExample = arrayListOf(
+                Example(columnOne = "List One", columnTwo = 1, columnThree = Date()),
+                Example(columnOne = "List Two", columnTwo = 2, columnThree = Date()),
+                Example(columnOne = "List Three", columnTwo = 3, columnThree = Date()),
+                Example(columnOne = "List Four", columnTwo = 4, columnThree = Date()),
+                Example(columnOne = "List Five", columnTwo = 5, columnThree = Date())
+        )
+        database.insert(listOfExample)
     }
 
     fun readContent(database: DatabaseHelper): List<Example>? = database.get(Example::class)
