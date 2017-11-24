@@ -1,15 +1,10 @@
 package hinl.android.kotlin.databasehelper
 
-import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.support.v7.app.AppCompatActivity
 import hinl.android.kotlin.databasehelper.example.database.DatabaseHelper
 import hinl.android.kotlin.databasehelper.example.schema.Example
-import hinl.kotlin.database.helper.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
 
