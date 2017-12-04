@@ -11,6 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findParameterByName
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
@@ -126,22 +127,70 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.insert(tableName, null, contentValues)
     }
 
-    fun update(obj: Any, where: (Where.() -> Where)? = null) {
-        val (tableName, fieldMap) = validateValidClass(obj::class)
+    fun update(obj: Any) {
+        when (obj) {
+            is Collection<*> -> {
+                for (single in obj) {
+                    updateObject(single)
+                }
+            }
+            else -> {
+                updateObject(obj)
+            }
+        }
+    }
 
-        var (whereClause, args) = getWhereStatement(where)
+    internal fun updateObject(obj: Any?) {
+        if (obj == null) {
+            return
+        }
+        val (tableName, fieldMap) = validateValidClass(obj::class)
+        var whereClause: String? = null
+        var args: Array<String>? = null
 
         val contentValues = ContentValues()
         for (key in fieldMap.keys) {
             val schema: Schema? = fieldMap[key]?.javaField?.annotations?.find { it is Schema } as? Schema
             if (schema?.generatedId ?: false) {
                 val field = schema?.field
-                if (where == null && field != null && obj.getDataBaseFieldValue(key = key) != null) {
+                if (field != null && obj.getDataBaseFieldValue(key = key) != null) {
                     whereClause = schema.field + Where.IStatement.Equal
                     args = arrayOf(obj.getDataBaseFieldValue(key = key).toString())
                 }
                 continue
             }
+            val value = obj.getDataBaseFieldValue(key = key)
+            if (value != null) {
+                when (value) {
+                    is String -> contentValues.put(key, value)
+                    is Date -> contentValues.put(key, value.time)
+                    is Boolean -> contentValues.put(key, value)
+                    is Char -> contentValues.put(key, value.toString())
+                    is Byte -> contentValues.put(key, value)
+                    is Short -> contentValues.put(key, value)
+                    is Int -> contentValues.put(key, value)
+                    is Long -> contentValues.put(key, value)
+                    is Float -> contentValues.put(key, value)
+                    is Double -> contentValues.put(key, value)
+                    is ByteArray -> contentValues.put(key, value)
+                    is BigDecimal -> contentValues.put(key, value.toDouble())
+
+                }
+            }
+        }
+        writableDatabase.update(tableName, contentValues, whereClause, args)
+    }
+
+    fun update(obj: Any, where: (Where.() -> Where)? = null) {
+        if (obj::class.isSubclassOf(Collection::class)) {
+            return
+        }
+        val (tableName, fieldMap) = validateValidClass(obj::class)
+
+        var (whereClause, args) = getWhereStatement(where)
+
+        val contentValues = ContentValues()
+        for (key in fieldMap.keys) {
             val value = obj.getDataBaseFieldValue(key = key)
             if (value != null) {
                 when (value) {
@@ -171,6 +220,22 @@ abstract class SQLiteDatabaseHelper(context: Context?,
     }
 
     fun delete(obj: Any) {
+        when(obj) {
+            is Collection<*> -> {
+                for (single in obj) {
+                    deleteObject(single)
+                }
+            }
+            else -> {
+                deleteObject(obj)
+            }
+        }
+    }
+
+    internal fun deleteObject(obj: Any?) {
+        if (obj == null) {
+            return
+        }
         val (tableName, fieldMap) = validateValidClass(obj::class)
         var whereClause: String? = null
         var args: Array<String>? = null

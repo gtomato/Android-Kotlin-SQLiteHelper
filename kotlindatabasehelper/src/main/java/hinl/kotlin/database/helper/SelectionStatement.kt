@@ -82,7 +82,7 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         return this
     }
 
-    private fun addOperatorFuntion(operatorFunction: IStatement): Where {
+    private fun addOperatorFunction(operatorFunction: IStatement): Where {
         if (mStatements.isEmpty()) {
             throw IllegalArgumentException("And statement cannot be the first params")
         }
@@ -182,12 +182,12 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         }
 
         override fun and(): Operator {
-            where.addOperatorFuntion(Condition.And)
+            where.addOperatorFunction(Condition.And)
             return this
         }
 
         override fun or(): Operator {
-            where.addOperatorFuntion(Condition.Or)
+            where.addOperatorFunction(Condition.Or)
             return this
         }
     }
