@@ -15,6 +15,7 @@ class MainActivity : AppCompatActivity() {
         createTable(dataBase)
         insertContent(dataBase)
         insertListContent(dataBase)
+        updateContentWithSpecificColumn(dataBase)
         val listOfExample = readContent(dataBase)
         val updateExample = listOfExample?.get(0)
         updateExample?.columnOne = "Updated Column One"
@@ -60,6 +61,16 @@ class MainActivity : AppCompatActivity() {
 
     fun updateContent(database: DatabaseHelper, exampleObject: Example) {
         database.update(exampleObject)
+    }
+
+    fun updateContentWithSpecificColumn(database: DatabaseHelper) {
+        val fieldMap = hashMapOf(
+                "columnOne" to "Change",
+                "columnTwo" to 10
+        )
+        database.update(fieldMap, Example::class) {
+            between("Id", 10, 20)
+        }
     }
 
     fun deleteContent(database: DatabaseHelper, exampleObject: Example) {

@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import java.math.BigDecimal
 import java.util.*
+import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
@@ -208,6 +209,31 @@ abstract class SQLiteDatabaseHelper(context: Context?,
                     is BigDecimal -> contentValues.put(key, value.toDouble())
 
                 }
+            }
+        }
+        writableDatabase.update(tableName, contentValues, whereClause, args)
+    }
+
+    fun <T: Any> update(updateFieldMap: HashMap<String, Any>, obj: KClass<T>, where: (Where.() -> Where)? = null) {
+        val (tableName) = validateValidClass(obj)
+        var (whereClause, args) = getWhereStatement(where)
+        val contentValues = ContentValues()
+        for (key in updateFieldMap.keys) {
+            val value = updateFieldMap[key]
+            when (value) {
+                is String -> contentValues.put(key, value)
+                is Date -> contentValues.put(key, value.time)
+                is Boolean -> contentValues.put(key, value)
+                is Char -> contentValues.put(key, value.toString())
+                is Byte -> contentValues.put(key, value)
+                is Short -> contentValues.put(key, value)
+                is Int -> contentValues.put(key, value)
+                is Long -> contentValues.put(key, value)
+                is Float -> contentValues.put(key, value)
+                is Double -> contentValues.put(key, value)
+                is ByteArray -> contentValues.put(key, value)
+                is BigDecimal -> contentValues.put(key, value.toDouble())
+
             }
         }
         writableDatabase.update(tableName, contentValues, whereClause, args)
