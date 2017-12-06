@@ -18,7 +18,7 @@ uploadArchives {
 }
 
 buildscript {
-    ext.kotlinVersion = '1.1.51'
+    ext.kotlinVersion = '1.2.0'
 }
 
 android {

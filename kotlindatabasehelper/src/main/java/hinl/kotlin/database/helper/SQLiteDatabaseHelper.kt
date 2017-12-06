@@ -108,21 +108,7 @@ abstract class SQLiteDatabaseHelper(context: Context?,
             }
             val value = obj.getDataBaseFieldValue(key = key)
             if (value != null) {
-                when (value) {
-                    is String -> contentValues.put(key, value)
-                    is Date -> contentValues.put(key, value.time)
-                    is Boolean -> contentValues.put(key, value)
-                    is Char -> contentValues.put(key, value.toString())
-                    is Byte -> contentValues.put(key, value)
-                    is Short -> contentValues.put(key, value)
-                    is Int -> contentValues.put(key, value)
-                    is Long -> contentValues.put(key, value)
-                    is Float -> contentValues.put(key, value)
-                    is Double -> contentValues.put(key, value)
-                    is ByteArray -> contentValues.put(key, value)
-                    is BigDecimal -> contentValues.put(key, value.toDouble())
-
-                }
+                contentValues.put(key, value)
             }
         }
         writableDatabase.insert(tableName, null, contentValues)
@@ -162,21 +148,7 @@ abstract class SQLiteDatabaseHelper(context: Context?,
             }
             val value = obj.getDataBaseFieldValue(key = key)
             if (value != null) {
-                when (value) {
-                    is String -> contentValues.put(key, value)
-                    is Date -> contentValues.put(key, value.time)
-                    is Boolean -> contentValues.put(key, value)
-                    is Char -> contentValues.put(key, value.toString())
-                    is Byte -> contentValues.put(key, value)
-                    is Short -> contentValues.put(key, value)
-                    is Int -> contentValues.put(key, value)
-                    is Long -> contentValues.put(key, value)
-                    is Float -> contentValues.put(key, value)
-                    is Double -> contentValues.put(key, value)
-                    is ByteArray -> contentValues.put(key, value)
-                    is BigDecimal -> contentValues.put(key, value.toDouble())
-
-                }
+                contentValues.put(key, value)
             }
         }
         writableDatabase.update(tableName, contentValues, whereClause, args)
@@ -194,21 +166,7 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         for (key in fieldMap.keys) {
             val value = obj.getDataBaseFieldValue(key = key)
             if (value != null) {
-                when (value) {
-                    is String -> contentValues.put(key, value)
-                    is Date -> contentValues.put(key, value.time)
-                    is Boolean -> contentValues.put(key, value)
-                    is Char -> contentValues.put(key, value.toString())
-                    is Byte -> contentValues.put(key, value)
-                    is Short -> contentValues.put(key, value)
-                    is Int -> contentValues.put(key, value)
-                    is Long -> contentValues.put(key, value)
-                    is Float -> contentValues.put(key, value)
-                    is Double -> contentValues.put(key, value)
-                    is ByteArray -> contentValues.put(key, value)
-                    is BigDecimal -> contentValues.put(key, value.toDouble())
-
-                }
+                contentValues.put(key, value)
             }
         }
         writableDatabase.update(tableName, contentValues, whereClause, args)
@@ -220,20 +178,8 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         val contentValues = ContentValues()
         for (key in updateFieldMap.keys) {
             val value = updateFieldMap[key]
-            when (value) {
-                is String -> contentValues.put(key, value)
-                is Date -> contentValues.put(key, value.time)
-                is Boolean -> contentValues.put(key, value)
-                is Char -> contentValues.put(key, value.toString())
-                is Byte -> contentValues.put(key, value)
-                is Short -> contentValues.put(key, value)
-                is Int -> contentValues.put(key, value)
-                is Long -> contentValues.put(key, value)
-                is Float -> contentValues.put(key, value)
-                is Double -> contentValues.put(key, value)
-                is ByteArray -> contentValues.put(key, value)
-                is BigDecimal -> contentValues.put(key, value.toDouble())
-
+            if (value != null) {
+                contentValues.put(key, value)
             }
         }
         writableDatabase.update(tableName, contentValues, whereClause, args)
@@ -399,6 +345,24 @@ abstract class SQLiteDatabaseHelper(context: Context?,
             order = whereObj.getOrder()
         }
         return Statements(whereClause, args, order)
+    }
+}
+
+private fun ContentValues.put(key: String, value: Any) {
+    when (value) {
+        is String -> this.put(key, value)
+        is Date -> this.put(key, value.time)
+        is Boolean -> this.put(key, value)
+        is Char -> this.put(key, value.toString())
+        is Byte -> this.put(key, value)
+        is Short -> this.put(key, value)
+        is Int -> this.put(key, value)
+        is Long -> this.put(key, value)
+        is Float -> this.put(key, value)
+        is Double -> this.put(key, value)
+        is ByteArray -> this.put(key, value)
+        is BigDecimal -> this.put(key, value.toDouble())
+
     }
 }
 
