@@ -20,11 +20,17 @@ annotation class Schema(val field: String,
                         val autoIncrease: Boolean = false,
                         val unique: Boolean = false)
 
+/**
+ * Internal function to get TableName annotation @see[Database]
+ */
 internal fun KClass<*>.getTableName(): String {
     val dataBase = this.findAnnotation<Database>()
     return dataBase?.tableName ?: ""
 }
 
+/**
+ * Internal function to get memberProperties with annotation @see[Schema]
+ */
 internal fun KClass<*>.getDataBaseField(): HashMap<String, KProperty1<*, *>> {
     val schemaMap = HashMap<String, KProperty1<*, *>>()
     for (field in this.memberProperties ){//.java.declaredFields) {
@@ -36,6 +42,9 @@ internal fun KClass<*>.getDataBaseField(): HashMap<String, KProperty1<*, *>> {
     return schemaMap
 }
 
+/**
+ * Internal function to get generatedId annotation @see[Schema]
+ */
 internal fun KProperty1<*, *>.isDataBaseFieldGeneratedId(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
@@ -45,6 +54,9 @@ internal fun KProperty1<*, *>.isDataBaseFieldGeneratedId(): Boolean? {
     }
 }
 
+/**
+ * Internal function to get nonNullable annotation @see[Schema]
+ */
 internal fun KProperty1<*, *>.isDataBaseFieldNonNullable(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
@@ -54,6 +66,9 @@ internal fun KProperty1<*, *>.isDataBaseFieldNonNullable(): Boolean? {
     }
 }
 
+/**
+ * Internal function to get autoIncrease annotation @see[Schema]
+ */
 internal fun KProperty1<*, *>.isDataBaseFieldAutoIncrease(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
@@ -63,6 +78,9 @@ internal fun KProperty1<*, *>.isDataBaseFieldAutoIncrease(): Boolean? {
     }
 }
 
+/**
+ * Internal function to get unique annotation @see[Schema]
+ */
 internal fun KProperty1<*, *>.isDataBaseFieldUnique(): Boolean? {
     val schema = (this.javaField?.annotations?.find { it is Schema } as? Schema)
     if (schema != null) {
@@ -72,12 +90,18 @@ internal fun KProperty1<*, *>.isDataBaseFieldUnique(): Boolean? {
     }
 }
 
+/**
+ * Internal function to get memberProperties value with annotation @see[Schema]
+ */
 internal fun Any.getDataBaseFieldValue(key: String): Any? {
     return this::class.memberProperties.find {
         (it.javaField?.annotations?.find { it is Schema } as? Schema)?.field == key
     }?.getter?.call(this)
 }
 
+/**
+ * Internal function to get Sql Database type String
+ */
 internal fun KClass<*>.getDataBaseFieldType(): String {
     return when (this) {
         String::class -> "TEXT"

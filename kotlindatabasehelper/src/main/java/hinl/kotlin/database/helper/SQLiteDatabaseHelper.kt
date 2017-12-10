@@ -18,8 +18,19 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
 
-
-abstract class SQLiteDatabaseHelper(context: Context?,
+/**
+ *
+ * a helper class for Sqlite Database management, it contain function for create table,
+ * insert, update, delete, count the data in a easy way
+ *
+ * You create a subclass of [SQLiteDatabaseHelper] implementing
+ * [onCreate] for init the database file
+ * [onUpgrade] for Database versioning and migration data
+ * [onUpgrade] will call when the
+ * @param[version] is higher than the current database file version
+ *
+ */
+abstract class SQLiteDatabaseHelper(context: Context,
                                     name: String?,
                                     factory: SQLiteDatabase.CursorFactory?,
                                     version: Int) : SQLiteOpenHelper(context, name, factory, version) {
@@ -40,6 +51,11 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         val COUNT_SQL_QUERY = "SELECT 1 FROM "
     }
 
+    /**
+     * Generate Sqlite table using Kotlin class with [Database] annotation
+     *
+     * @param [tableClass] Kotlin class with [Database] annotation
+     */
     fun createTable(tableClass: KClass<*>) {
         val (tableName, fieldMap) = validateValidClass(tableClass)
 
@@ -82,6 +98,11 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.execSQL(sb.toString())
     }
 
+    /**
+     * Insert Row into Database
+     *
+     * @param [obj] The instance of Kotlin Class with [Database] and [Schema] annotation, it can be Collection of target Kotlin class
+     */
     fun insert(obj: Any) {
         when (obj) {
             is Collection<*> -> {
@@ -95,6 +116,9 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         }
     }
 
+    /**
+     * Internal function to insert single object
+     */
     internal fun insertObj(obj: Any?) {
         if (obj == null) {
             return
@@ -114,6 +138,11 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.insert(tableName, null, contentValues)
     }
 
+    /**
+     * Update Row into Database
+     *
+     * @param [obj] The instance of Kotlin Class with [Database] and [Schema] annotation, it can be Collection of target Kotlin class
+     */
     fun update(obj: Any) {
         when (obj) {
             is Collection<*> -> {
@@ -127,6 +156,9 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         }
     }
 
+    /**
+     * Internal function to update single object
+     */
     internal fun updateObject(obj: Any?) {
         if (obj == null) {
             return
@@ -154,6 +186,12 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.update(tableName, contentValues, whereClause, args)
     }
 
+    /**
+     * Update Multiple Row into Database matching the given [where], or 'null' to update all row in table
+     *
+     * @param [obj] The instance of Kotlin Class with [Database] and [Schema] annotation, it can not be Collections
+     *
+     */
     fun update(obj: Any, where: (Where.() -> Where)? = null) {
         if (obj::class.isSubclassOf(Collection::class)) {
             return
@@ -172,8 +210,15 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.update(tableName, contentValues, whereClause, args)
     }
 
-    fun <T: Any> update(updateFieldMap: HashMap<String, Any>, obj: KClass<T>, where: (Where.() -> Where)? = null) {
-        val (tableName) = validateValidClass(obj)
+    /**
+     * Update Multiple Row with specific column into Database matching the given [where], or 'null' to update all row in table
+     *
+     * @param [updateFieldMap] key-value pair of target update field in data base with [HashMap] expression
+     * @param [kClass] the target Kotlin Class with [Database] and [Schema] annotation
+     *
+     */
+    fun <T: Any> update(updateFieldMap: HashMap<String, Any>, kClass: KClass<T>, where: (Where.() -> Where)? = null) {
+        val (tableName) = validateValidClass(kClass)
         var (whereClause, args) = getWhereStatement(where)
         val contentValues = ContentValues()
         for (key in updateFieldMap.keys) {
@@ -185,12 +230,23 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.update(tableName, contentValues, whereClause, args)
     }
 
-    fun <T: Any> delete(obj: KClass<T>, where: (Where.() -> Where)? = null) {
-        val (tableName) = validateValidClass(obj::class)
+    /**
+     * Delete Multiple Row with specific column into Database matching the given [where], or 'null' to delete all row in table
+     *
+     * @param [kClass] the target Kotlin Class with [Database] and [Schema] annotation
+     *
+     */
+    fun <T: Any> delete(kClass: KClass<T>, where: (Where.() -> Where)? = null) {
+        val (tableName) = validateValidClass(kClass::class)
         var (whereClause, args) = getWhereStatement(where)
         writableDatabase.delete(tableName, whereClause, args)
     }
 
+    /**
+     * Delete Row into Database
+     *
+     * @param [obj] The instance of Kotlin Class with [Database] and [Schema] annotation, it can be Collection of target Kotlin class
+     */
     fun delete(obj: Any) {
         when(obj) {
             is Collection<*> -> {
@@ -204,6 +260,9 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         }
     }
 
+    /**
+     * Internal function to delete single object
+     */
     internal fun deleteObject(obj: Any?) {
         if (obj == null) {
             return
@@ -226,8 +285,14 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         writableDatabase.delete(tableName, whereClause, args)
     }
 
-    fun <T: Any> get(obj: KClass<T>, where: (Where.() -> Where)? = null): List<T>? {
-        val (tableName, fieldMap) = validateValidClass(obj)
+    /**
+     * Read Multiple Row in Table matching the given [where], or 'null' to read all row in table
+     *
+     * @param [kClass] the target Kotlin Class with [Database] and [Schema] annotation
+     * @return [List] The List of result with type [T]
+     */
+    fun <T: Any> get(kClass: KClass<T>, where: (Where.() -> Where)? = null): List<T>? {
+        val (tableName, fieldMap) = validateValidClass(kClass)
         val rDB = readableDatabase
         val outputArr = Array(fieldMap.keys.size, {
             i -> fieldMap.keys.elementAt(i)
@@ -236,11 +301,17 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         val (whereClause, args, order) = getWhereStatement(where)
 
         val c = rDB.query(tableName, outputArr, whereClause, args, null, null, order)
-        val ret = getCursorObjects(obj, c)
+        val ret = getCursorObjects(kClass, c)
         c.close()
         return ret
     }
 
+    /**
+     * Count number of entries in Table matching the given [where], or 'null' to read all row in table
+     *
+     * @param [tableClass] the target Kotlin Class with [Database] annotation
+     * @return [Int] The Number of entries
+     */
     fun count(tableClass: KClass<*>, where: (Where.() -> Where)? = null): Int {
         val (tableName) = validateValidClass(tableClass)
         val rDB = readableDatabase
@@ -259,6 +330,12 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         return count
     }
 
+    /**
+     * Run the Raw sql statement, it can return [List] of [T] using 'SELECT' statement when [objClass] is not 'null'
+     *
+     * @param [objClass] The target Kotlin Class with [Database] annotation, ignore it if statement is not 'SELECT'
+     * @param [sqlString] The sql statement which will execute
+     */
     fun <T: Any> execRawSQL(objClass: KClass<T>? = null, sqlString: String): List<T>? {
         if (objClass == null) {
             writableDatabase.rawQuery(sqlString, null)
@@ -272,6 +349,9 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         }
     }
 
+    /**
+     * Close the Database after using
+     */
     fun closeDatabase() {
         if (writableDatabase.isOpen) {
             writableDatabase.close()
@@ -281,6 +361,14 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         }
     }
 
+    /**
+     * Private function to convert all database data to Kotlin Object type [T]
+     *
+     * @param [objClass] The Kotlin Class of [T]
+     * @param [c] The [Cursor] instance after execute sql statement
+     *
+     * @return [List] The List of type [T] after convert
+     */
     private fun <T: Any> getCursorObjects(objClass: KClass<T>, c: Cursor): List<T> {
         val ret = mutableListOf<T>()
         while (c.moveToNext()) {
@@ -318,21 +406,33 @@ abstract class SQLiteDatabaseHelper(context: Context?,
         return ret
     }
 
-    private fun validateValidClass(obj: KClass<*>): DataBaseSchema{
-        if (!obj.isData) {
+    /**
+     * Private function to validate if the Kotlin Class contain table name annotation [Database] and Schema annotation [Schema]
+     *
+     * @throws [IllegalArgumentException] will throw if the Kotlin Class does not match the limitation
+     */
+    private fun validateValidClass(kClass: KClass<*>): DataBaseSchema{
+        if (!kClass.isData) {
             throw IllegalArgumentException("Object Must Be Instance of Data Class")
         }
-        val tableName = obj.getTableName()
+        val tableName = kClass.getTableName()
         if (tableName.isEmpty()) {
             throw IllegalArgumentException("Object Must Be Contain Table Name")
         }
-        val fieldMap = obj.getDataBaseField()
+        val fieldMap = kClass.getDataBaseField()
         if (fieldMap.isEmpty()) {
             throw IllegalArgumentException("Object Must Be Contain Field(s)")
         }
         return DataBaseSchema(tableName, fieldMap)
     }
 
+    /**
+     * Private function to get where statement clause and argument
+     *
+     * @param [where] The lambdas of [Where] to apply
+     *
+     * @return [Statements]
+     */
     private fun getWhereStatement(where: (Where.() -> Where)? = null): Statements {
         var whereClause: String? = null
         var args: Array<String>? = null
@@ -348,6 +448,9 @@ abstract class SQLiteDatabaseHelper(context: Context?,
     }
 }
 
+/**
+ * Private function for input different content type into [ContentValues] due to [ContentValues] need a specific Object Type
+ */
 private fun ContentValues.put(key: String, value: Any) {
     when (value) {
         is String -> this.put(key, value)
@@ -366,6 +469,13 @@ private fun ContentValues.put(key: String, value: Any) {
     }
 }
 
+/**
+ * Internal Data Class for storing Database table name, database fields for function return
+ *
+ * @see [SQLiteDatabaseHelper.validateValidClass]
+ * @param [tableName] Table name of the Kotlin Class
+ * @param [fieldMap] The Map of database field in Kotlin Class
+ */
 internal data class DataBaseSchema(
         val tableName: String,
         val fieldMap: HashMap<String, KProperty1<*, *>>

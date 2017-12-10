@@ -5,16 +5,79 @@ import java.util.*
 
 interface ISelectionOperator<WHERE:ISelectionOperator<WHERE, OPERATOR>,
         OPERATOR: ISelectionOperator<WHERE, OPERATOR>> {
+
+    /**
+     *
+     * This function is for equal statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value
+     */
     fun eq(key: String, value: Any): WHERE
+    /**
+     *
+     * This function is for Not equal statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value
+     */
     fun notEq(key: String, value: Any): WHERE
+    /**
+     *
+     * This function is for Greater Than statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value in Number
+     */
     fun greaterThan(key: String, value: Number): WHERE
+    /**
+     *
+     * This function is for Greater Than Or Equal statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value in Number
+     */
     fun greaterThanOrEq(key: String, value: Number): WHERE
+    /**
+     *
+     * This function is for Smaller Than statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value in Number
+     */
     fun smallerThan(key: String, value: Number): WHERE
+    /**
+     *
+     * This function is for Smaller Than Or Equal statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value in Number
+     */
     fun smallerThanOrEq(key: String, value: Number): WHERE
+    /**
+     *
+     * This function is for Between statement
+     * @param key   Column Name in the table
+     * @param first   the target row value in Number
+     * @param second   the target row value in Number
+     */
     fun between(key: String, first: Number, second: Number): WHERE
+    /**
+     *
+     * This function is for Between statement
+     * @param key   Column Name in the table
+     * @param first   the target row value in Date
+     * @param second   the target row value in Date
+     */
     fun between(key: String, first: Date, second: Date): WHERE
+    /**
+     *
+     * This function is for LIKE statement
+     * @param key   Column Name in the table
+     *  @param value   the target row value in String
+     */
     fun containString(key: String, value: String): WHERE
+    /**
+     * This function is for link up different statement with AND
+     */
     fun and(): OPERATOR
+    /**
+     * This function is for link up different statement with OR
+     */
     fun or(): OPERATOR
 
     enum class Order {
@@ -90,6 +153,12 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         return this
     }
 
+    /**
+     * This function is add order by statement in selection cause
+     *
+     * @param [order] The orderBy type , Ascending/ Descending
+     * @see[ISelectionOperator.Order]
+     */
     fun orderBy(order: ISelectionOperator.Order, vararg key: String): Where {
         this.mOrder = OrderStatement(key.toList(), order)
         return this
@@ -103,7 +172,10 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         return Operator(this).or()
     }
 
-    fun getClauseString(): String? {
+    /**
+     * Internal function to get Selection Clause String for Sqlite statement
+     */
+    internal fun getClauseString(): String? {
         val sb = StringBuilder()
         mStatements.forEach {
             sb.append(it.getStatementString())
@@ -116,7 +188,10 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         }
     }
 
-    fun getArgs(): Array<String>? {
+    /**
+     * Internal function to get Clause arguments for Sqlite statement
+     */
+    internal fun getArgs(): Array<String>? {
         val stringArr = ArrayList<String>()
         mStatements.forEach {
             val arr = it.getArgs()
@@ -131,7 +206,10 @@ class Where: ISelectionOperator<Where, Where.Operator> {
         }
     }
 
-    fun getOrder(): String? {
+    /**
+     * Internal function to get Order By Type
+     */
+    internal fun getOrder(): String? {
         return mOrder?.getStatementString()
     }
 
@@ -333,6 +411,13 @@ class Where: ISelectionOperator<Where, Where.Operator> {
     }
 }
 
+/**
+ * Internal data class for storing selection statement clause and arguments
+ *
+ * @param [whereClause] The selection statement string for sqlite statement
+ * @param [whereArgs] The argument for the selection statement
+ * @param [order] The Order By Type String for sqlite statement
+ */
 internal data class Statements(
         val whereClause: String?,
         val whereArgs: Array<String>?,
