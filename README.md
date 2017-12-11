@@ -4,11 +4,11 @@ Android-Kotlin SQLiteHelper is a Kotlin library for simplifly android sqlite dat
 
 #Feature
 >Simple way to construct table
-* Simply using annotation to create table and set column properties, [see also](#Construct-Table)
+* Simply using annotation to create table and set column properties, [see also](#construct-table)
 >One-line read or write data
 * You can use one line only for read, insert, update and delete row in table
 >Easy Selection case
-* for more selection case, Where class can help you read or write data, [see also](#Selection-cause)
+* for more selection case, Where class can help you read or write data, [see also](#selection-cause)
 
 ## Getting Started
 
