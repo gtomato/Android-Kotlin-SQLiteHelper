@@ -266,7 +266,7 @@ For more example, you can take a look in /app module
 
 ## Authors
 
-* **Hin Lai** - *Initial work*
+* **[Hin Lai](https://github.com/hinls1007)** - *Initial work*
 
 ## License
 
